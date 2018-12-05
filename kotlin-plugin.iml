@@ -12,7 +12,7 @@
       <excludeFolder url="file://$MODULE_DIR$/build" />
       <excludeFolder url="file://$MODULE_DIR$/test-project/build" />
     </content>
-    <orderEntry type="jdk" jdkName="Java 1.8" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="savant-core" scope="PROVIDED" />
@@ -41,17 +41,7 @@
     </orderEntry>
     <orderEntry type="module" module-name="savant-utils" scope="PROVIDED" />
     <orderEntry type="module" module-name="dependency-plugin" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$USER_HOME$/.savant/cache/org/savantbuild/plugin/file/1.0.2/file-1.0.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$USER_HOME$/.savant/cache/org/savantbuild/plugin/file/1.0.2/file-1.0.2-src.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
+    <orderEntry type="module" module-name="file-plugin" />
     <orderEntry type="module" module-name="savant-io" />
     <orderEntry type="module-library" scope="TEST">
       <library>
@@ -154,3 +144,4 @@
     </orderEntry>
   </component>
 </module>
+

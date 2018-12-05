@@ -38,7 +38,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
   final String ERROR_MESSAGE = "You must create the file [~/.savant/plugins/org.savantbuild.plugin.kotlin.properties] " +
       "that contains the system configuration for the Kotlin plugin. This file should include the location of the Kotlin SDK " +
       "(kotlin and kotlinc) by version. These properties look like this:\n\n" +
-      "  1.3=/Users/tyler/.sdkman/candidates/kotlin/1.3.10\n"
+      "  1.3=/Library/Kotlin/1.3.10\n"
   public static
   final String JAVA_ERROR_MESSAGE = "You must create the file [~/.savant/plugins/org.savantbuild.plugin.java.properties] " +
       "that contains the system configuration for the Java system. This file should include the location of the JDK " +
