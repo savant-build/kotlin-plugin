@@ -43,6 +43,13 @@ class KotlinLayout {
   Path mainSourceDirectory = Paths.get("src/main/kotlin")
 
   /**
+   * The java main source directory. Defaults to {@code src/main/java}.
+   *
+   * This allows for kotlin to detect java files in the same project.
+   */
+  Path javaSourceDirectory = Paths.get("src/main/java")
+
+  /**
    * The main resource directory. Defaults to {@code src/main/resources}.
    */
   Path mainResourceDirectory = Paths.get("src/main/resources")

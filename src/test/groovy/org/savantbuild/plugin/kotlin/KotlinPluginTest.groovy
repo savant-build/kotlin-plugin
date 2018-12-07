@@ -120,10 +120,6 @@ class KotlinPluginTest {
     assertJarContains(projectDir.resolve("test-project/build/jars/test-project-test-1.0.0-src.jar"), "MyClassKotlinTest.kt", "test.txt")
 
     // javaTestNGPlugin.test()
-
-    kotlin.document()
-    //TODO
-    //assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/doc/index.html")))
   }
 
   private static void assertJarContains(Path jarFile, String... entries) {

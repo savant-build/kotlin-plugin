@@ -20,6 +20,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Function
 import java.util.function.Predicate
+import java.util.stream.Collectors
 
 import org.savantbuild.dep.domain.ArtifactID
 import org.savantbuild.domain.Project
@@ -52,7 +53,6 @@ class KotlinPlugin extends BaseGroovyPlugin {
   Properties javaProperties
   String kotlinHome
   Path kotlincPath
-  Path dokkaPath
   String javaHome
   FilePlugin filePlugin
   DependencyPlugin dependencyPlugin
@@ -105,7 +105,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
    */
   void compileMain() {
     initialize()
-    compile(layout.mainSourceDirectory, layout.mainBuildDirectory, settings.mainDependencies, layout.mainBuildDirectory)
+    compile(layout.mainSourceDirectory, layout.javaSourceDirectory, layout.mainBuildDirectory, settings.mainDependencies, layout.mainBuildDirectory)
     copyResources(layout.mainResourceDirectory, layout.mainBuildDirectory)
   }
 
@@ -120,8 +120,28 @@ class KotlinPlugin extends BaseGroovyPlugin {
    */
   void compileTest() {
     initialize()
-    compile(layout.testSourceDirectory, layout.testBuildDirectory, settings.testDependencies, layout.mainBuildDirectory, layout.testBuildDirectory)
+    compile(layout.testSourceDirectory, layout.javaSourceDirectory, layout.testBuildDirectory, settings.testDependencies, layout.mainBuildDirectory, layout.testBuildDirectory)
     copyResources(layout.testResourceDirectory, layout.testBuildDirectory)
+  }
+
+  /**
+   * This could go in file tools, but I put it here to avoid rolling a release of core
+   * @param sourceDir The source directory to look for things
+   * @param filter A filter to limit what returns
+   * @return The files it found
+   */
+  private static List<Path> allFiles(Path sourceDir, Predicate<Path> filter) {
+    if (!Files.isDirectory(sourceDir)) {
+      return Collections.emptyList()
+    }
+
+    try {
+      return Files.walk(sourceDir).filter(filter)
+          .map({ path -> path.subpath(sourceDir.getNameCount(), path.getNameCount()) })
+          .collect(Collectors.toList())
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to search the source directory", e)
+    }
   }
 
   /**
@@ -133,12 +153,13 @@ class KotlinPlugin extends BaseGroovyPlugin {
    *   kotlin.compile(Paths.get("src/foo"), Paths.get("build/bar"), [[group: "compile", transitive: false, fetchSource: false]], Paths.get("additionalClasspathDirectory"))
    * </pre>
    *
-   * @param sourceDirectory The source directory that contains the kotlin source files.
+   * @param kotlinSourceDirectory The source directory that contains the kotlin source files.
    * @param buildDirectory The build directory to compile the kotlin files to.
    * @param dependencies The dependencies of the project to include in the compile classpath.
    */
-  void compile(Path sourceDirectory, Path buildDirectory, List<Map<String, Object>> dependencies, Path... additionalClasspath) {
-    Path resolvedSourceDir = project.directory.resolve(sourceDirectory)
+  void compile(Path kotlinSourceDirectory, Path javaSourceDirectory, Path buildDirectory, List<Map<String, Object>> dependencies, Path... additionalClasspath) {
+    // Find kotlin files
+    Path resolvedSourceDir = project.directory.resolve(kotlinSourceDirectory)
     Path resolvedBuildDir = project.directory.resolve(buildDirectory)
     Files.createDirectories(resolvedBuildDir)
 
@@ -147,15 +168,24 @@ class KotlinPlugin extends BaseGroovyPlugin {
     Predicate<Path> filter = FileTools.extensionFilter(".kt")
     Function<Path, Path> mapper = FileTools.extensionMapper(".kt", ".class")
     List<Path> filesToCompile = FileTools.modifiedFiles(resolvedSourceDir, resolvedBuildDir, filter, mapper)
-        .collect({ path -> sourceDirectory.resolve(path) })
+        .collect({ path -> kotlinSourceDirectory.resolve(path) })
     if (filesToCompile.isEmpty()) {
-      output.infoln("Skipping compile for source directory [${sourceDirectory}]. No files need compiling")
+      output.infoln("Skipping compile for source directory [${kotlinSourceDirectory}]. No files need compiling")
       return
     }
 
-    output.infoln "Compiling [${filesToCompile.size()}] Kotlin classes from [${sourceDirectory}] to [${buildDirectory}]"
+    // Find java files
+    Path resolvedJavaSourceDir = project.directory.resolve(javaSourceDirectory)
 
-    String command = "${kotlincPath} ${settings.compilerArguments} ${classpath(dependencies, settings.libraryDirectories, additionalClasspath)} -jdk-home ${javaHome} -d ${buildDirectory} ${filesToCompile.join(" ")}"
+    output.debugln("Looking for java files that kotlin might need iin [${resolvedJavaSourceDir}]")
+
+    filter = FileTools.extensionFilter(".java")
+    List<Path> javaFiles = allFiles(resolvedJavaSourceDir, filter)
+        .collect({ path -> javaSourceDirectory.resolve(path) })
+
+    output.infoln "Compiling [${filesToCompile.size()}] Kotlin classes from [${kotlinSourceDirectory}] to [${buildDirectory}]"
+
+    String command = "${kotlincPath} ${settings.compilerArguments} ${classpath(dependencies, settings.libraryDirectories, additionalClasspath)} -jdk-home ${javaHome} -d ${buildDirectory} ${filesToCompile.join(" ")} ${javaFiles.join(" ")}"
     output.debugln("Executing [${command}]")
 
     Process process = command.execute(["JAVA_HOME=${javaHome}", "KOTLIN_HOME=${kotlinHome}"], project.directory.toFile())
@@ -189,40 +219,6 @@ class KotlinPlugin extends BaseGroovyPlugin {
     filePlugin.copy(to: buildDirectory) {
       fileSet(dir: sourceDirectory)
     }
-  }
-
-  /**
-   * Creates the project's KDoc. This executes the dokka command and outputs the docs to the {@code layout.docDirectory}
-   * <p>
-   * Here is an example of calling this method:
-   * <p>
-   * <pre>
-   *   kotlin.document()
-   * </pre>
-   */
-  void document() {
-    // TODO
-//    initialize()
-//
-//    output.infoln "Generating KDoc to [${layout.docDirectory}]"
-//
-//    FileSet fileSet = new FileSet(project.directory.resolve(layout.mainSourceDirectory))
-//    Set<String> packages = fileSet.toFileInfos()
-//                                  .stream()
-//                                  .map({ info -> info.relative.getParent().toString().replace("/", ".") })
-//                                  .collect(Collectors.toSet())
-//
-//    String command = "${dokkaPath} ${layout.mainSourceDirectory} ${classpath(settings.mainDependencies, settings.libraryDirectories)} ${settings.docArguments} -output ${layout.docDirectory} ${packages.join(" ")}"
-//    output.debugln("Executing [${command}]")
-//
-//    Process process = command.execute(["JAVA_HOME=${javaHome}", "KOTLIN_HOME=${kotlinHome}"], project.directory.toFile())
-//    process.consumeProcessOutput((Appendable) System.out, System.err)
-//    process.waitFor()
-//
-//    int exitCode = process.exitValue()
-//    if (exitCode != 0) {
-//      fail("dokka failed")
-//    }
   }
 
   /**
@@ -305,12 +301,6 @@ class KotlinPlugin extends BaseGroovyPlugin {
     if (!Files.isExecutable(kotlincPath)) {
       fail("The kotlinc compiler [${kotlincPath.toAbsolutePath()}] is not executable.")
     }
-
-    // TODO
-//    dokkaPath = Paths.get(kotlinHome, "bin/dokka-fatjar.jar")
-//    if (!Files.isRegularFile(dokkaPath)) {
-//      fail("The dokka-fatjar.jar [${dokkaPath.toAbsolutePath()}] does not exist.")
-//    }
 
     if (!settings.javaVersion) {
       fail("You must configure the Java version to use with the settings object. It will look something like this:\n\n" +

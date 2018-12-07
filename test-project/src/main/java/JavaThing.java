@@ -13,30 +13,6 @@
  * either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-
-/**
- * This is a simple class.
- *
- * @author Tyler Scott
- */
-class MyClass {
-    fun doSomething(str: String): String {
-        return "$str did something"
-    }
-
-    companion object {
-        @JvmField
-        val javaField = 42
-
-        @JvmStatic
-        fun javaFunc(): String {
-            return "Java works"
-        }
-    }
-
-    fun javaInterop(): String {
-        return JavaThing.string
-    }
+class JavaThing {
+  public static String string = "string";
 }
-
-
