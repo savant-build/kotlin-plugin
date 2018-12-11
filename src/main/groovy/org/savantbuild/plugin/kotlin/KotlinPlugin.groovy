@@ -120,7 +120,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
    */
   void compileTest() {
     initialize()
-    compile(layout.testSourceDirectory, layout.javaSourceDirectory, layout.testBuildDirectory, settings.testDependencies, layout.mainBuildDirectory, layout.testBuildDirectory)
+    compile(layout.testSourceDirectory, layout.testJavaSourceDirectory, layout.testBuildDirectory, settings.testDependencies, layout.mainBuildDirectory, layout.testBuildDirectory)
     copyResources(layout.testResourceDirectory, layout.testBuildDirectory)
   }
 
@@ -154,6 +154,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
    * </pre>
    *
    * @param kotlinSourceDirectory The source directory that contains the kotlin source files.
+   * @param javaSourceDirectory The java source directory that contains classes kotlin might use.
    * @param buildDirectory The build directory to compile the kotlin files to.
    * @param dependencies The dependencies of the project to include in the compile classpath.
    */

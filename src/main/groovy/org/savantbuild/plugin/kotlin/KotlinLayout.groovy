@@ -65,6 +65,11 @@ class KotlinLayout {
   Path testSourceDirectory = Paths.get("src/test/kotlin")
 
   /**
+   * The test java directory. Defaults to {@code src/test/java}.
+   */
+  Path testJavaSourceDirectory = Paths.get("src/test/java")
+
+  /**
    * The test resource directory. Defaults to {@code src/test/resources}.
    */
   Path testResourceDirectory = Paths.get("src/test/resources")
