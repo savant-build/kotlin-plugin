@@ -99,7 +99,7 @@ class KotlinPluginTest {
     assertFalse(Files.isDirectory(projectDir.resolve("test-project/build")))
 
     kotlin.compileMain()
-    assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/classes/main/MyClass.class")))
+    assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/classes/main/KotlinThing.class")))
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/classes/main/main.txt")))
 
     kotlin.compileTest()
@@ -111,15 +111,15 @@ class KotlinPluginTest {
 
     kotlin.jar()
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/jars/test-project-1.0.0.jar")))
-    assertJarContains(projectDir.resolve("test-project/build/jars/test-project-1.0.0.jar"), "MyClass.class", "main.txt")
+    assertJarContains(projectDir.resolve("test-project/build/jars/test-project-1.0.0.jar"), "JavaThing.class", "KotlinThing.class", "main.txt")
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/jars/test-project-1.0.0-src.jar")))
-    assertJarContains(projectDir.resolve("test-project/build/jars/test-project-1.0.0-src.jar"), "MyClass.kt", "main.txt")
+    assertJarContains(projectDir.resolve("test-project/build/jars/test-project-1.0.0-src.jar"), "JavaThing.java", "KotlinThing.kt", "main.txt")
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/jars/test-project-test-1.0.0.jar")))
-    assertJarContains(projectDir.resolve("test-project/build/jars/test-project-test-1.0.0.jar"), "MyClassKotlinTest.class", "test.txt")
+    assertJarContains(projectDir.resolve("test-project/build/jars/test-project-test-1.0.0.jar"), "MyClassKotlinTest.class", "JavaTestDomainThing.class", "KotlinTestDomainThing.class", "MyClassJavaTest.class", "test.txt")
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/jars/test-project-test-1.0.0-src.jar")))
-    assertJarContains(projectDir.resolve("test-project/build/jars/test-project-test-1.0.0-src.jar"), "MyClassKotlinTest.kt", "test.txt")
+    assertJarContains(projectDir.resolve("test-project/build/jars/test-project-test-1.0.0-src.jar"), "MyClassKotlinTest.kt", "JavaTestDomainThing.java", "KotlinTestDomainThing.kt", "MyClassJavaTest.java", "test.txt")
 
-    // javaTestNGPlugin.test()
+//    javaTestNGPlugin.test()
   }
 
   private static void assertJarContains(Path jarFile, String... entries) {

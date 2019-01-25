@@ -13,6 +13,30 @@
  * either express or implied. See the License for the specific
  * language governing permissions and limitations under the License.
  */
-public class JavaThing {
-  public String thing = "thing";
+
+/**
+ * This is a simple class.
+ *
+ * @author Tyler Scott
+ */
+class KotlinThing(val thing: String = "thing") {
+    fun doSomething(str: String): String {
+        return "$str did something"
+    }
+
+    companion object {
+        @JvmField
+        val javaField = 42
+
+        @JvmStatic
+        fun javaFunc(): String {
+            return "Java works"
+        }
+    }
+
+    fun javaInterop(): String {
+        return JavaThing().thing
+    }
 }
+
+

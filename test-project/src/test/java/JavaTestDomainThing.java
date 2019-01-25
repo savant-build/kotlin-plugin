@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Inversoft Inc., All Rights Reserved
+ * Copyright (c) 2019, Inversoft Inc., All Rights Reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,8 @@
  */
 
 /**
- * This is a simple class.
- *
  * @author Tyler Scott
  */
-class MyClass {
-    fun doSomething(str: String): String {
-        return "$str did something"
-    }
-
-    companion object {
-        @JvmField
-        val javaField = 42
-
-        @JvmStatic
-        fun javaFunc(): String {
-            return "Java works"
-        }
-    }
-
-    fun javaInterop(): String {
-        return JavaThing.string
-    }
+public class JavaTestDomainThing {
+  public String thing = "thing";
 }
-
-

@@ -25,7 +25,19 @@ import org.testng.annotations.Test
 class MyClassKotlinTest {
     @Test
     fun simple() {
-        val myClass = MyClass()
-        assertEquals(myClass.doSomething("frank"), "frank did something")
+        val thing = KotlinThing()
+        assertEquals(thing.doSomething("frank"), "frank did something")
+    }
+
+    @Test
+    fun dependOnJavaTestFilesAndSources() {
+        // Get thing from java test folder
+        assertEquals(JavaTestDomainThing().thing, "thing")
+        // Get thing from kotlin test folder
+        assertEquals(KotlinTestDomainThing().thing, "thing")
+        // Get thing from java sources
+        assertEquals(JavaThing().thing, "thing")
+        // Get thing from kotlin sources
+        assertEquals(KotlinThing().thing, "thing")
     }
 }

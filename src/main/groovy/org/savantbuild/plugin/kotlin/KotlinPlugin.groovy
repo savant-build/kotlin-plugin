@@ -105,7 +105,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
    */
   void compileMain() {
     initialize()
-    compile(layout.mainSourceDirectory, layout.javaSourceDirectory, layout.mainBuildDirectory, settings.mainDependencies, layout.mainBuildDirectory)
+    compile([layout.mainSourceDirectory], [layout.javaSourceDirectory], layout.mainBuildDirectory, settings.mainDependencies, layout.mainBuildDirectory)
     copyResources(layout.mainResourceDirectory, layout.mainBuildDirectory)
   }
 
@@ -120,7 +120,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
    */
   void compileTest() {
     initialize()
-    compile(layout.testSourceDirectory, layout.testJavaSourceDirectory, layout.testBuildDirectory, settings.testDependencies, layout.mainBuildDirectory, layout.testBuildDirectory)
+    compile([layout.testSourceDirectory, layout.mainSourceDirectory], [layout.testJavaSourceDirectory, layout.javaSourceDirectory], layout.testBuildDirectory, settings.testDependencies, layout.mainBuildDirectory, layout.testBuildDirectory)
     copyResources(layout.testResourceDirectory, layout.testBuildDirectory)
   }
 
@@ -153,38 +153,45 @@ class KotlinPlugin extends BaseGroovyPlugin {
    *   kotlin.compile(Paths.get("src/foo"), Paths.get("build/bar"), [[group: "compile", transitive: false, fetchSource: false]], Paths.get("additionalClasspathDirectory"))
    * </pre>
    *
-   * @param kotlinSourceDirectory The source directory that contains the kotlin source files.
-   * @param javaSourceDirectory The java source directory that contains classes kotlin might use.
+   * @param kotlinDirectories The directories that contains the kotlin files.
+   * @param javaDirectories The java directories that contain classes kotlin might use.
    * @param buildDirectory The build directory to compile the kotlin files to.
    * @param dependencies The dependencies of the project to include in the compile classpath.
    */
-  void compile(Path kotlinSourceDirectory, Path javaSourceDirectory, Path buildDirectory, List<Map<String, Object>> dependencies, Path... additionalClasspath) {
-    // Find kotlin files
-    Path resolvedSourceDir = project.directory.resolve(kotlinSourceDirectory)
+  void compile(List<Path> kotlinDirectories, List<Path> javaDirectories, Path buildDirectory, List<Map<String, Object>> dependencies, Path... additionalClasspath) {
+
     Path resolvedBuildDir = project.directory.resolve(buildDirectory)
     Files.createDirectories(resolvedBuildDir)
 
-    output.debugln("Looking for modified files to compile in [${resolvedSourceDir}] compared with [${resolvedBuildDir}]")
+    // Find kotlin files
+    List<Path> filesToCompile = kotlinDirectories.collect { it ->
+      Path resolvedSourceDir = project.directory.resolve(it)
 
-    Predicate<Path> filter = FileTools.extensionFilter(".kt")
-    Function<Path, Path> mapper = FileTools.extensionMapper(".kt", ".class")
-    List<Path> filesToCompile = FileTools.modifiedFiles(resolvedSourceDir, resolvedBuildDir, filter, mapper)
-        .collect({ path -> kotlinSourceDirectory.resolve(path) })
+      output.debugln("Looking for modified files to compile in [${resolvedSourceDir}] compared with [${resolvedBuildDir}]")
+
+      Predicate<Path> filter = FileTools.extensionFilter(".kt")
+      Function<Path, Path> mapper = FileTools.extensionMapper(".kt", ".class")
+      return FileTools.modifiedFiles(resolvedSourceDir, resolvedBuildDir, filter, mapper)
+          .collect({ path -> it.resolve(path) })
+    }.flatten()
+
     if (filesToCompile.isEmpty()) {
       output.infoln("Skipping compile for source directory [${kotlinSourceDirectory}]. No files need compiling")
       return
     }
 
     // Find java files
-    Path resolvedJavaSourceDir = project.directory.resolve(javaSourceDirectory)
+    List<Path> javaFiles = javaDirectories.collect() {
+      Path resolvedJavaSourceDir = project.directory.resolve(it)
 
-    output.debugln("Looking for java files that kotlin might need iin [${resolvedJavaSourceDir}]")
+      output.debugln("Looking for java files that kotlin might need in [${resolvedJavaSourceDir}]")
 
-    filter = FileTools.extensionFilter(".java")
-    List<Path> javaFiles = allFiles(resolvedJavaSourceDir, filter)
-        .collect({ path -> javaSourceDirectory.resolve(path) })
+      Predicate<Path> filter = FileTools.extensionFilter(".java")
+      return allFiles(resolvedJavaSourceDir, filter)
+          .collect({ path -> it.resolve(path) })
+    }.flatten()
 
-    output.infoln "Compiling [${filesToCompile.size()}] Kotlin classes from [${kotlinSourceDirectory}] to [${buildDirectory}]"
+    output.infoln "Compiling [${filesToCompile.size()}] Kotlin classes from to [${buildDirectory}]"
 
     String command = "${kotlincPath} ${settings.compilerArguments} ${classpath(dependencies, settings.libraryDirectories, additionalClasspath)} -jdk-home ${javaHome} -d ${buildDirectory} ${filesToCompile.join(" ")} ${javaFiles.join(" ")}"
     output.debugln("Executing [${command}]")
@@ -236,9 +243,9 @@ class KotlinPlugin extends BaseGroovyPlugin {
     initialize()
 
     jar(layout.jarOutputDirectory.resolve(project.toArtifact().getArtifactFile()), layout.mainBuildDirectory)
-    jar(layout.jarOutputDirectory.resolve(project.toArtifact().getArtifactSourceFile()), layout.mainSourceDirectory, layout.mainResourceDirectory)
+    jar(layout.jarOutputDirectory.resolve(project.toArtifact().getArtifactSourceFile()), layout.mainSourceDirectory, layout.mainResourceDirectory, layout.javaSourceDirectory)
     jar(layout.jarOutputDirectory.resolve(project.toArtifact().getArtifactTestFile()), layout.testBuildDirectory)
-    jar(layout.jarOutputDirectory.resolve(project.toArtifact().getArtifactTestSourceFile()), layout.testSourceDirectory, layout.testResourceDirectory)
+    jar(layout.jarOutputDirectory.resolve(project.toArtifact().getArtifactTestSourceFile()), layout.testSourceDirectory, layout.testResourceDirectory, layout.testJavaSourceDirectory)
   }
 
   /**

@@ -23,10 +23,22 @@ import static org.testng.Assert.assertEquals;
  */
 public class MyClassJavaTest {
   @Test
+  public void interopTest() {
+    // Get thing from java test folder
+    assertEquals(new JavaTestDomainThing().thing, "thing");
+    // Get thing from kotlin test folder
+    assertEquals(new KotlinTestDomainThing().getThing(), "thing");
+    // Get thing from java sources
+    assertEquals(new JavaThing().thing, "thing");
+    // Get thing from kotlin sources
+    assertEquals(new KotlinThing().getThing(), "thing");
+  }
+
+  @Test
   public void javaTest() {
-    MyClass myClass = new MyClass();
+    KotlinThing myClass = new KotlinThing();
     assertEquals(myClass.doSomething("java"), "java did something");
-    assertEquals(MyClass.javaField, 42);
-    assertEquals(MyClass.javaFunc(), "Java works");
+    assertEquals(KotlinThing.javaField, 42);
+    assertEquals(KotlinThing.javaFunc(), "Java works");
   }
 }
