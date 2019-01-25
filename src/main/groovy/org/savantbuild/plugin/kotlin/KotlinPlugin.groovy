@@ -176,7 +176,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
     }.flatten()
 
     if (filesToCompile.isEmpty()) {
-      output.infoln("Skipping compile for source directory [${kotlinSourceDirectory}]. No files need compiling")
+      output.infoln("Skipping compile for source directory [${kotlinDirectories.join(", ")}]. No files need compiling")
       return
     }
 
@@ -191,7 +191,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
           .collect({ path -> it.resolve(path) })
     }.flatten()
 
-    output.infoln "Compiling [${filesToCompile.size()}] Kotlin classes from to [${buildDirectory}]"
+    output.infoln "Compiling [${filesToCompile.size()}] Kotlin classes from [${kotlinDirectories.join(", ")}] to [${buildDirectory}]"
 
     String command = "${kotlincPath} ${settings.compilerArguments} ${classpath(dependencies, settings.libraryDirectories, additionalClasspath)} -jdk-home ${javaHome} -d ${buildDirectory} ${filesToCompile.join(" ")} ${javaFiles.join(" ")}"
     output.debugln("Executing [${command}]")
