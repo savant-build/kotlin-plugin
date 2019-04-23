@@ -105,7 +105,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
    */
   void compileMain() {
     initialize()
-    compile([layout.mainSourceDirectory], [layout.javaSourceDirectory], layout.mainBuildDirectory, settings.mainDependencies, layout.mainBuildDirectory)
+    compileInternal(layout.mainSourceDirectory, layout.javaSourceDirectory, layout.mainBuildDirectory, settings.mainDependencies, layout.mainBuildDirectory)
     copyResources(layout.mainResourceDirectory, layout.mainBuildDirectory)
   }
 
@@ -120,7 +120,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
    */
   void compileTest() {
     initialize()
-    compile([layout.testSourceDirectory, layout.mainSourceDirectory], [layout.testJavaSourceDirectory, layout.javaSourceDirectory], layout.testBuildDirectory, settings.testDependencies, layout.mainBuildDirectory, layout.testBuildDirectory)
+    compileInternal(layout.testSourceDirectory, layout.testJavaSourceDirectory, layout.testBuildDirectory, settings.testDependencies, layout.mainBuildDirectory, layout.testBuildDirectory)
     copyResources(layout.testResourceDirectory, layout.testBuildDirectory)
   }
 
@@ -153,45 +153,42 @@ class KotlinPlugin extends BaseGroovyPlugin {
    *   kotlin.compile(Paths.get("src/foo"), Paths.get("build/bar"), [[group: "compile", transitive: false, fetchSource: false]], Paths.get("additionalClasspathDirectory"))
    * </pre>
    *
-   * @param kotlinDirectories The directories that contains the kotlin files.
-   * @param javaDirectories The java directories that contain classes kotlin might use.
+   * @param kotlinDirectory The directories that contains the kotlin files.
+   * @param javaDirectory The java directories that contain classes kotlin might use.
    * @param buildDirectory The build directory to compile the kotlin files to.
    * @param dependencies The dependencies of the project to include in the compile classpath.
    */
-  void compile(List<Path> kotlinDirectories, List<Path> javaDirectories, Path buildDirectory, List<Map<String, Object>> dependencies, Path... additionalClasspath) {
+  private void compileInternal(Path kotlinDirectory, Path javaDirectory, Path buildDirectory, List<Map<String, Object>> dependencies, Path... additionalClasspath) {
 
     Path resolvedBuildDir = project.directory.resolve(buildDirectory)
     Files.createDirectories(resolvedBuildDir)
 
     // Find kotlin files
-    List<Path> filesToCompile = kotlinDirectories.collect { it ->
-      Path resolvedSourceDir = project.directory.resolve(it)
+    Path resolvedSourceDir = project.directory.resolve(kotlinDirectory)
 
-      output.debugln("Looking for modified files to compile in [${resolvedSourceDir}] compared with [${resolvedBuildDir}]")
+    output.debugln("Looking for modified files to compile in [${resolvedSourceDir}] compared with [${resolvedBuildDir}]")
 
-      Predicate<Path> filter = FileTools.extensionFilter(".kt")
-      Function<Path, Path> mapper = FileTools.extensionMapper(".kt", ".class")
-      return FileTools.modifiedFiles(resolvedSourceDir, resolvedBuildDir, filter, mapper)
-          .collect({ path -> it.resolve(path) })
-    }.flatten()
+    Predicate<Path> kotlinFilter = FileTools.extensionFilter(".kt")
+    Function<Path, Path> mapper = FileTools.extensionMapper(".kt", ".class")
+    List<Path> filesToCompile = FileTools.modifiedFiles(resolvedSourceDir, resolvedBuildDir, kotlinFilter, mapper)
+        .collect({ path -> kotlinDirectory.resolve(path) })
+
 
     if (filesToCompile.isEmpty()) {
-      output.infoln("Skipping compile for source directory [${kotlinDirectories.join(", ")}]. No files need compiling")
+      output.infoln("Skipping compile for source directory [${kotlinDirectory}]. No files need compiling")
       return
     }
 
     // Find java files
-    List<Path> javaFiles = javaDirectories.collect() {
-      Path resolvedJavaSourceDir = project.directory.resolve(it)
+    Path resolvedJavaSourceDir = project.directory.resolve(javaDirectory)
 
-      output.debugln("Looking for java files that kotlin might need in [${resolvedJavaSourceDir}]")
+    output.debugln("Looking for java files that kotlin might need in [${resolvedJavaSourceDir}]")
 
-      Predicate<Path> filter = FileTools.extensionFilter(".java")
-      return allFiles(resolvedJavaSourceDir, filter)
-          .collect({ path -> it.resolve(path) })
-    }.flatten()
+    Predicate<Path> javaFilter = FileTools.extensionFilter(".java")
+    List<Path> javaFiles = allFiles(resolvedJavaSourceDir, javaFilter)
+        .collect { path -> javaDirectory.resolve(path) }
 
-    output.infoln "Compiling [${filesToCompile.size()}] Kotlin classes from [${kotlinDirectories.join(", ")}] to [${buildDirectory}]"
+    output.infoln "Compiling [${filesToCompile.size()}] Kotlin classes from [${kotlinDirectory}] to [${buildDirectory}]"
 
     String command = "${kotlincPath} ${settings.compilerArguments} ${classpath(dependencies, settings.libraryDirectories, additionalClasspath)} -jdk-home ${javaHome} -d ${buildDirectory} ${filesToCompile.join(" ")} ${javaFiles.join(" ")}"
     output.debugln("Executing [${command}]")
@@ -242,10 +239,10 @@ class KotlinPlugin extends BaseGroovyPlugin {
   void jar() {
     initialize()
 
-    jar(layout.jarOutputDirectory.resolve(project.toArtifact().getArtifactFile()), layout.mainBuildDirectory)
-    jar(layout.jarOutputDirectory.resolve(project.toArtifact().getArtifactSourceFile()), layout.mainSourceDirectory, layout.mainResourceDirectory, layout.javaSourceDirectory)
-    jar(layout.jarOutputDirectory.resolve(project.toArtifact().getArtifactTestFile()), layout.testBuildDirectory)
-    jar(layout.jarOutputDirectory.resolve(project.toArtifact().getArtifactTestSourceFile()), layout.testSourceDirectory, layout.testResourceDirectory, layout.testJavaSourceDirectory)
+    jarInternal(project.toArtifact().getArtifactFile(), layout.mainBuildDirectory)
+    jarInternal(project.toArtifact().getArtifactSourceFile(), layout.mainSourceDirectory, layout.mainResourceDirectory, layout.javaSourceDirectory)
+    jarInternal(project.toArtifact().getArtifactTestFile(), layout.testBuildDirectory)
+    jarInternal(project.toArtifact().getArtifactTestSourceFile(), layout.testSourceDirectory, layout.testResourceDirectory, layout.testJavaSourceDirectory)
   }
 
   /**
@@ -260,10 +257,12 @@ class KotlinPlugin extends BaseGroovyPlugin {
    * @param jarFile The Jar file to create.
    * @param directories The directories to include in the Jar file.
    */
-  void jar(Path jarFile, Path... directories) {
-    output.infoln("Creating JAR [${jarFile}]")
+  private void jarInternal(String jarFile, Path... directories) {
+    def absolutePath = layout.jarOutputDirectory.resolve(jarFile)
 
-    filePlugin.jar(file: jarFile) {
+    output.infoln("Creating JAR [${absolutePath}]")
+
+    filePlugin.jar(file: absolutePath) {
       directories.each { dir ->
         optionalFileSet(dir: dir)
       }

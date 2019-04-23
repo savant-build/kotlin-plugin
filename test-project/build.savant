@@ -29,7 +29,7 @@ project(name: "test-project", group: "org.savantbuild.test", version: "0.1", lic
 
   dependencies {
     group(name: "compile") {
-      dependency(id: "org.jetbrains.kotlin:kotlin-stdlib:1.3.10")
+      dependency(id: "org.jetbrains.kotlin:kotlin-stdlib:1.3.21")
     }
     group(name: "test-compile") {
       dependency(id: "org.testng:testng:6.8.7")
@@ -55,7 +55,7 @@ target(name: "clean", description: "Cleans the project") {
 }
 
 target(name: "jar", description: "JARs the project", dependsOn: ["compile"]) {
-  java.jar()
+  kotlin.jar()
 }
 
 target(name: "test", description: "Runs the projects test", dependsOn: ["clean", "jar"]) {
@@ -63,6 +63,8 @@ target(name: "test", description: "Runs the projects test", dependsOn: ["clean",
 }
 
 target(name: "compile", description: "Compile the java") {
-  kotlin.compile()
-  java.compile()
+  kotlin.compileMain()
+  java.compileMain()
+  kotlin.compileTest()
+  java.compileTest()
 }

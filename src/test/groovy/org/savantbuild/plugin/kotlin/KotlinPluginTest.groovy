@@ -102,12 +102,15 @@ class KotlinPluginTest {
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/classes/main/KotlinThing.class")))
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/classes/main/main.txt")))
 
+    // Test relies on java sources as well so we need to compile main
+    java.compileMain()
+
     kotlin.compileTest()
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/classes/test/MyClassKotlinTest.class")))
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/classes/test/test.txt")))
 
     // Java can compile things after kotlin is compiled
-    java.compile()
+    java.compileTest()
 
     kotlin.jar()
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/jars/test-project-1.0.0.jar")))
