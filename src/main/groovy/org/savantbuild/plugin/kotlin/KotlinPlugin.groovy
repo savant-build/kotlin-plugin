@@ -190,7 +190,7 @@ class KotlinPlugin extends BaseGroovyPlugin {
 
     output.infoln "Compiling [${filesToCompile.size()}] Kotlin classes from [${kotlinDirectory}] to [${buildDirectory}]"
 
-    String command = "${kotlincPath} ${settings.compilerArguments} ${classpath(dependencies, settings.libraryDirectories, additionalClasspath)} -jdk-home ${javaHome} -d ${buildDirectory} ${filesToCompile.join(" ")} ${javaFiles.join(" ")}"
+    String command = "${kotlincPath} ${settings.compilerArguments} ${classpath(dependencies, settings.libraryDirectories, additionalClasspath)} -jdk-home ${javaHome} -jvm-target ${settings.javaVersion} -d ${buildDirectory} ${filesToCompile.join(" ")} ${javaFiles.join(" ")}"
     output.debugln("Executing [${command}]")
 
     Process process = command.execute(["JAVA_HOME=${javaHome}", "KOTLIN_HOME=${kotlinHome}"], project.directory.toFile())
