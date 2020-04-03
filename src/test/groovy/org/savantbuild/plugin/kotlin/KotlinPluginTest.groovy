@@ -37,7 +37,6 @@ import org.savantbuild.output.SystemOutOutput
 import org.savantbuild.parser.groovy.PublicationsDelegate
 import org.savantbuild.plugin.java.JavaPlugin
 import org.savantbuild.plugin.java.testng.JavaTestNGPlugin
-import org.savantbuild.plugin.kotlin.KotlinPlugin
 import org.savantbuild.runtime.RuntimeConfiguration
 import org.testng.annotations.BeforeSuite
 import org.testng.annotations.Test
@@ -75,7 +74,6 @@ class KotlinPluginTest {
     project.version = new Version("1.0")
     project.licenses.put(License.ApacheV2_0, null)
 
-//    Path repositoryPath = Paths.get(System.getProperty("user.home"), "dev/inversoft/repositories/savant")
     def cache = new CacheProcess(output, null)
     project.dependencies = new Dependencies(new DependencyGroup("test-compile", false, new Artifact("org.testng:testng:6.8.7:jar", false)))
     project.workflow = new Workflow(
@@ -121,8 +119,6 @@ class KotlinPluginTest {
     assertJarContains(projectDir.resolve("test-project/build/jars/test-project-test-1.0.0.jar"), "MyClassKotlinTest.class", "JavaTestDomainThing.class", "KotlinTestDomainThing.class", "MyClassJavaTest.class", "test.txt")
     assertTrue(Files.isRegularFile(projectDir.resolve("test-project/build/jars/test-project-test-1.0.0-src.jar")))
     assertJarContains(projectDir.resolve("test-project/build/jars/test-project-test-1.0.0-src.jar"), "MyClassKotlinTest.kt", "JavaTestDomainThing.java", "KotlinTestDomainThing.kt", "MyClassJavaTest.java", "test.txt")
-
-//    javaTestNGPlugin.test()
   }
 
   private static void assertJarContains(Path jarFile, String... entries) {
